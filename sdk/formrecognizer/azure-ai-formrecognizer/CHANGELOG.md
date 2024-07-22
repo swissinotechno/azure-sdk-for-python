@@ -1,6 +1,6 @@
 # Release History
 
-## 3.3.2 (Unreleased)
+## 3.3.3 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,13 @@
 ### Bugs Fixed
 
 ### Other Changes
+- Added support for Python 3.12.
+- Python 3.7 is no longer supported. Please use Python version 3.8 or later.
+
+## 3.3.2 (2023-11-07)
+
+### Bugs Fixed
+- Fixed incorrect data type for returned formula objects.
 
 ## 3.3.1 (2023-10-10)
 

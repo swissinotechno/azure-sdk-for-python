@@ -10,8 +10,8 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from azure.ai.ml._restclient.v2023_04_01_preview.models import JobBase
-from azure.ai.ml._restclient.v2023_04_01_preview.models import PipelineJob as RestPipelineJob
+from azure.ai.ml._restclient.v2023_08_01_preview.models import JobBase
+from azure.ai.ml._restclient.v2023_08_01_preview.models import PipelineJob as RestPipelineJob
 from azure.ai.ml._schema import PathAwareSchema
 from azure.ai.ml._schema.pipeline.pipeline_job import PipelineJobSchema
 from azure.ai.ml._utils._arm_id_utils import get_resource_name_from_arm_id_safe
@@ -74,7 +74,7 @@ class PipelineJob(Job, YamlTranslatableMixin, PipelineJobIOMixin, PathAwareSchem
     :type inputs: dict[str, Union[~azure.ai.ml.entities.Input, str, bool, int, float]]
     :param outputs: Outputs of the pipeline job.
     :type outputs: dict[str, ~azure.ai.ml.entities.Output]
-    :param name: Name of the PipelineJob. Defaults to None
+    :param name: Name of the PipelineJob. Defaults to None.
     :type name: str
     :param description: Description of the pipeline job. Defaults to None
     :type description: str
@@ -92,6 +92,7 @@ class PipelineJob(Job, YamlTranslatableMixin, PipelineJobIOMixin, PathAwareSchem
         ~azure.ai.ml.entities._credentials.ManagedIdentityConfiguration,
         ~azure.ai.ml.entities._credentials.AmlTokenConfiguration,
         ~azure.ai.ml.entities._credentials.UserIdentityConfiguration
+
     ]
     :param compute: Compute target name of the built pipeline. Defaults to None
     :type compute: str
@@ -103,8 +104,8 @@ class PipelineJob(Job, YamlTranslatableMixin, PipelineJobIOMixin, PathAwareSchem
     .. admonition:: Example:
 
         .. literalinclude:: ../samples/ml_samples_pipeline_job_configurations.py
-            :start-after: [START configure_PipelineJob_and_PipelineJobSettings]
-            :end-before: [END configure_PipelineJob_and_PipelineJobSettings]
+            :start-after: [START configure_pipeline_job_and_settings]
+            :end-before: [END configure_pipeline_job_and_settings]
             :language: python
             :dedent: 8
             :caption: Shows how to create a pipeline using this class.

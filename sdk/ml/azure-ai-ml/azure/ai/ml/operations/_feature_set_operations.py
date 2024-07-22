@@ -9,19 +9,18 @@ import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from marshmallow.exceptions import ValidationError as SchemaValidationError
 
 from azure.ai.ml._artifacts._artifact_utilities import _check_and_upload_path
 from azure.ai.ml._exception_helper import log_and_raise_error
-from azure.ai.ml._restclient.v2023_08_01_preview import AzureMachineLearningServices as ServiceClient082023Preview
+from azure.ai.ml._restclient.v2023_08_01_preview import AzureMachineLearningWorkspaces as ServiceClient082023Preview
 from azure.ai.ml._restclient.v2023_10_01 import AzureMachineLearningServices as ServiceClient102023
 from azure.ai.ml._restclient.v2023_10_01.models import (
     FeaturesetVersion,
     FeaturesetVersionBackfillRequest,
     FeatureWindow,
-    ListViewType,
 )
 from azure.ai.ml._scope_dependent_operations import OperationConfig, OperationScope, _ScopeDependentOperations
 from azure.ai.ml._telemetry import ActivityType, monitor_with_activity
@@ -33,7 +32,9 @@ from azure.ai.ml._utils._feature_store_utils import (
 )
 from azure.ai.ml._utils._logger_utils import OpsLogger
 from azure.ai.ml._utils.utils import is_url
+from azure.ai.ml.constants import ListViewType
 from azure.ai.ml.entities._assets._artifacts.feature_set import FeatureSet
+from azure.ai.ml.entities._feature_set.data_availability_status import DataAvailabilityStatus
 from azure.ai.ml.entities._feature_set.feature import Feature
 from azure.ai.ml.entities._feature_set.feature_set_backfill_metadata import FeatureSetBackfillMetadata
 from azure.ai.ml.entities._feature_set.feature_set_materialization_metadata import FeatureSetMaterializationMetadata
@@ -90,7 +91,7 @@ class FeatureSetOperations(_ScopeDependentOperations):
         :param name: Name of a specific FeatureSet asset, optional.
         :type name: Optional[str]
         :keyword list_view_type: View type for including/excluding (for example) archived FeatureSet assets.
-        Default: ACTIVE_ONLY.
+            Defaults to ACTIVE_ONLY.
         :type list_view_type: Optional[ListViewType]
         :return: An iterator like instance of FeatureSet objects
         :rtype: ~azure.core.paging.ItemPaged[FeatureSet]
@@ -112,7 +113,7 @@ class FeatureSetOperations(_ScopeDependentOperations):
             **kwargs,
         )
 
-    def _get(self, name: str, version: str = None, **kwargs: Dict) -> FeaturesetVersion:
+    def _get(self, name: str, version: Optional[str] = None, **kwargs: Dict) -> FeaturesetVersion:
         return self._operation.get(
             resource_group_name=self._resource_group_name,
             workspace_name=self._workspace_name,
@@ -160,8 +161,9 @@ class FeatureSetOperations(_ScopeDependentOperations):
 
         sas_uri = None
 
-        with open(os.path.join(featureset_copy.path, ".amlignore"), mode="w", encoding="utf-8") as f:
-            f.write(".*")
+        if not is_url(featureset_copy.path):
+            with open(os.path.join(featureset_copy.path, ".amlignore"), mode="w", encoding="utf-8") as f:
+                f.write(".*\n*.amltmp\n*.amltemp")
 
         featureset_copy, _ = _check_and_upload_path(
             artifact=featureset_copy, asset_operations=self, sas_uri=sas_uri, artifact_type=ErrorTarget.FEATURE_SET
@@ -193,7 +195,7 @@ class FeatureSetOperations(_ScopeDependentOperations):
         tags: Optional[Dict[str, str]] = None,
         compute_resource: Optional[MaterializationComputeResource] = None,
         spark_configuration: Optional[Dict[str, str]] = None,
-        data_status: Optional[List[str]] = None,
+        data_status: Optional[List[Union[str, DataAvailabilityStatus]]] = None,
         job_id: Optional[str] = None,
         **kwargs: Dict,
     ) -> LROPoller[FeatureSetBackfillMetadata]:
@@ -217,6 +219,8 @@ class FeatureSetOperations(_ScopeDependentOperations):
         :paramtype compute_resource: ~azure.ai.ml.entities.MaterializationComputeResource
         :keyword spark_configuration: Specifies the spark compute settings.
         :paramtype spark_configuration: dict[str, str]
+        :keyword data_status: Specifies the data status that you want to backfill.
+        :paramtype data_status: list[str or ~azure.ai.ml.entities.DataAvailabilityStatus]
         :return: An instance of LROPoller that returns ~azure.ai.ml.entities.FeatureSetBackfillMetadata
         :rtype: ~azure.core.polling.LROPoller[~azure.ai.ml.entities.FeatureSetBackfillMetadata]
         """
@@ -337,10 +341,10 @@ class FeatureSetOperations(_ScopeDependentOperations):
         :type feature_set_name: str
         :param version: Feature set version.
         :type version: str
-        :keyword feature_name. This is case-sensitive.
+        :keyword feature_name: This is case-sensitive.
         :paramtype feature_name: str
-        :keyword tags: String representation of a comma-separated list of tag names
-            (and optionally values). Example: "tag1,tag2=value2".
+        :keyword tags: String representation of a comma-separated list of tag names, and optionally, values.
+            For example, "tag1,tag2=value2". If provided, only features matching the specified tags are returned.
         :paramtype tags: str
         :return: Feature object
         :rtype: ~azure.ai.ml.entities.Feature
@@ -420,7 +424,7 @@ class FeatureSetOperations(_ScopeDependentOperations):
                 error_category=ErrorCategory.USER_ERROR,
             )
 
-        featureset_spec_path = str(featureset.specification.path)
+        featureset_spec_path: Any = str(featureset.specification.path)
         if is_url(featureset_spec_path):
             try:
                 featureset_spec_contents = read_remote_feature_set_spec_metadata(

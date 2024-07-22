@@ -1,6 +1,7 @@
 # Release History
 
-## 4.15.1 (Unreleased)
+## 4.16.1 (Unreleased)
+This version and all future versions will require Python 3.8+.
 
 ### Features Added
 
@@ -9,6 +10,12 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 4.16.0 (2023-11-08)
+
+### Features Added
+
+- Added new enum values to `SystemEventnames` related to Azure Resource Notifications.
 
 ## 4.15.0 (2023-10-12)
 
